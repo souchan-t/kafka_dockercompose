@@ -1,0 +1,44 @@
+version: '3'
+services:
+    zookeeper:
+        image: "myzookeeper"
+        container_name: "zookeeper"
+        ports:
+            - "2001:2181"
+        environment:
+            ZOOKEEPER_MYID: 1
+        volumes:
+            - ./zoo.cfg:/home/zookeeper/apache-zookeeper-3.6.2-bin/conf/zoo.cfg
+    broker1:
+        depends_on:
+            - zookeeper
+        image: "mykafka"
+        container_name: "broker1"
+        ports:
+            - "9001:9092"
+        volumes:
+            - ./server1.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
+        hostname: "broker1"
+
+    broker2:
+        depends_on:
+            - zookeeper
+        image: "mykafka"
+        container_name: "broker2"
+        ports:
+            - "9002:9092"
+        volumes:
+            - ./server2.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
+        hostname: "broker2"
+
+    broker3:
+        depends_on:
+            - zookeeper
+        image: "mykafka"
+        container_name: "broker3"
+        ports:
+            - "9003:9092"
+        volumes:
+            - ./server3.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
+        hostname: "broker3"
+
