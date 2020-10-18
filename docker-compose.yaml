@@ -8,7 +8,7 @@ services:
         environment:
             ZOOKEEPER_MYID: 1
         volumes:
-            - ./zoo.cfg:/home/zookeeper/apache-zookeeper-3.6.2-bin/conf/zoo.cfg
+            - ./zookeeper/zoo.cfg:/home/zookeeper/apache-zookeeper-3.6.2-bin/conf/zoo.cfg
     broker1:
         depends_on:
             - zookeeper
@@ -17,7 +17,7 @@ services:
         ports:
             - "9001:9092"
         volumes:
-            - ./server1.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
+            - ./kafka/server1.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
         hostname: "broker1"
 
     broker2:
@@ -28,7 +28,7 @@ services:
         ports:
             - "9002:9092"
         volumes:
-            - ./server2.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
+            - ./kafka/server2.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
         hostname: "broker2"
 
     broker3:
@@ -39,6 +39,18 @@ services:
         ports:
             - "9003:9092"
         volumes:
-            - ./server3.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
+            - ./kafka/server3.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
         hostname: "broker3"
 
+    kafka_proxy:
+        depends_on:
+            - broker1
+            - broker2
+            - broker3
+        image: "myconfluent"
+        container_name: "kafka_proxy"
+        ports:
+            - "8082:8082"
+        volumes:
+            - ./confluent/kafka-rest.properties:/home/confluent/confluent-6.0.0/etc/kafka-rest/kafka-rest.properties
+        command: ["kafka-rest-start","/home/confluent/confluent-6.0.0/etc/kafka-rest/kafka-rest.properties"]
