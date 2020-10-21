@@ -1,6 +1,7 @@
 version: '3'
 services:
     zookeeper:
+        build: ./zookeeper
         image: "myzookeeper"
         container_name: "zookeeper"
         ports:
@@ -10,6 +11,7 @@ services:
         volumes:
             - ./zookeeper/zoo.cfg:/home/zookeeper/apache-zookeeper-3.6.2-bin/conf/zoo.cfg
     broker1:
+        build: ./kafkabroker
         depends_on:
             - zookeeper
         image: "mykafka"
@@ -17,10 +19,11 @@ services:
         ports:
             - "9001:9092"
         volumes:
-            - ./kafka/server1.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
+            - ./kafkabroker/server1.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
         hostname: "broker1"
 
     broker2:
+        build: ./kafkabroker
         depends_on:
             - zookeeper
         image: "mykafka"
@@ -28,10 +31,11 @@ services:
         ports:
             - "9002:9092"
         volumes:
-            - ./kafka/server2.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
+            - ./kafkabroker/server2.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
         hostname: "broker2"
 
     broker3:
+        build: ./kafkabroker
         depends_on:
             - zookeeper
         image: "mykafka"
@@ -39,10 +43,11 @@ services:
         ports:
             - "9003:9092"
         volumes:
-            - ./kafka/server3.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
+            - ./kafkabroker/server3.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
         hostname: "broker3"
 
     kafka_proxy:
+        build: ./confluent
         depends_on:
             - broker1
             - broker2
@@ -54,3 +59,34 @@ services:
         volumes:
             - ./confluent/kafka-rest.properties:/home/confluent/confluent-6.0.0/etc/kafka-rest/kafka-rest.properties
         command: ["kafka-rest-start","/home/confluent/confluent-6.0.0/etc/kafka-rest/kafka-rest.properties"]
+
+    kafka_connector1:
+        depends_on:
+            - broker1
+            - broker2
+            - broker3
+        image: "mykafka"
+        container_name: "kafka_connector1"
+        ports:
+            - "8083:8083"
+        volumes:
+            - ./kafkaconnector/connect-distributed.properties:/home/kafka/kafka_2.13-2.6.0/config/connect-distributed.properties
+            - ./kafkaconnector/connector_plugins/lib:/home/kafka/connector_plugins/lib
+            - ./kafkaconnector/connector_plugins/etc:/home/kafka/connector_plugins/etc
+        command: ["connect-distributed.sh","/home/kafka/kafka_2.13-2.6.0/config/connect-distributed.properties","/home/kafka/connector_plugins/etc/quickstart-elasticsearch.properties"]
+
+    kafka_connector2:
+        depends_on:
+            - broker1
+            - broker2
+            - broker3
+        image: "mykafka"
+        container_name: "kafka_connector2"
+        ports:
+            - "8084:8083"
+        volumes:
+            - ./kafkaconnector/connect-distributed.properties:/home/kafka/kafka_2.13-2.6.0/config/connect-distributed.properties
+            - ./kafkaconnector/connector_plugins/lib:/home/kafka/connector_plugins/lib
+            - ./kafkaconnector/connector_plugins/etc:/home/kafka/connector_plugins/etc
+        command: ["connect-distributed.sh","/home/kafka/kafka_2.13-2.6.0/config/connect-distributed.properties","/home/kafka/connector_plugins/etc/quickstart-elasticsearch.properties"]
+
