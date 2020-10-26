@@ -1,19 +1,41 @@
 version: '3'
 services:
-    zookeeper:
+    zookeeper1:
         build: ./zookeeper
         image: "myzookeeper"
-        container_name: "zookeeper"
+        container_name: "zookeeper1"
         ports:
             - "2001:2181"
         environment:
             ZOOKEEPER_MYID: 1
         volumes:
             - ./zookeeper/zoo.cfg:/home/zookeeper/apache-zookeeper-3.6.2-bin/conf/zoo.cfg
+    zookeeper2:
+        build: ./zookeeper
+        image: "myzookeeper"
+        container_name: "zookeeper2"
+        ports:
+            - "2002:2181"
+        environment:
+            ZOOKEEPER_MYID: 2
+        volumes:
+            - ./zookeeper/zoo.cfg:/home/zookeeper/apache-zookeeper-3.6.2-bin/conf/zoo.cfg
+    zookeeper3:
+        build: ./zookeeper
+        image: "myzookeeper"
+        container_name: "zookeeper3"
+        ports:
+            - "2003:2181"
+        environment:
+            ZOOKEEPER_MYID: 3
+        volumes:
+            - ./zookeeper/zoo.cfg:/home/zookeeper/apache-zookeeper-3.6.2-bin/conf/zoo.cfg
     broker1:
         build: ./kafkabroker
         depends_on:
-            - zookeeper
+            - zookeeper1
+            - zookeeper2
+            - zookeeper3
         image: "mykafka"
         container_name: "broker1"
         ports:
@@ -23,36 +45,40 @@ services:
         hostname: "broker1"
 
         # メモリが足らなくなってきたのでクラスタリングは一時停止
-        #    broker2:
-        #        build: ./kafkabroker
-        #        depends_on:
-        #            - zookeeper
-        #        image: "mykafka"
-        #        container_name: "broker2"
-        #        ports:
-        #            - "9002:9092"
-        #        volumes:
-        #            - ./kafkabroker/server2.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
-        #        hostname: "broker2"
-        #
-        #    broker3:
-        #        build: ./kafkabroker
-        #        depends_on:
-        #            - zookeeper
-        #        image: "mykafka"
-        #        container_name: "broker3"
-        #        ports:
-        #            - "9003:9092"
-        #        volumes:
-        #            - ./kafkabroker/server3.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
-        #        hostname: "broker3"
+    broker2:
+        build: ./kafkabroker
+        depends_on:
+            - zookeeper1
+            - zookeeper2
+            - zookeeper3
+        image: "mykafka"
+        container_name: "broker2"
+        ports:
+            - "9002:9092"
+        volumes:
+            - ./kafkabroker/server2.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
+        hostname: "broker2"
+
+    broker3:
+        build: ./kafkabroker
+        depends_on:
+            - zookeeper1
+            - zookeeper2
+            - zookeeper3
+        image: "mykafka"
+        container_name: "broker3"
+        ports:
+            - "9003:9092"
+        volumes:
+            - ./kafkabroker/server3.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
+        hostname: "broker3"
 
     kafka_proxy:
         build: ./confluent
         depends_on:
             - broker1
-            #- broker2
-            #- broker3
+            - broker2
+            - broker3
         image: "myconfluent"
         container_name: "kafka_proxy"
         ports:
