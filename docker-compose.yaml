@@ -1,5 +1,6 @@
 version: '3'
 services:
+    # Zookeeperクラスタ
     zookeeper1:
         build: ./zookeeper
         image: "myzookeeper"
@@ -10,32 +11,36 @@ services:
             ZOOKEEPER_MYID: 1
         volumes:
             - ./zookeeper/zoo.cfg:/home/zookeeper/apache-zookeeper-3.6.2-bin/conf/zoo.cfg
-    zookeeper2:
-        build: ./zookeeper
-        image: "myzookeeper"
-        container_name: "zookeeper2"
-        ports:
-            - "2002:2181"
-        environment:
-            ZOOKEEPER_MYID: 2
-        volumes:
-            - ./zookeeper/zoo.cfg:/home/zookeeper/apache-zookeeper-3.6.2-bin/conf/zoo.cfg
-    zookeeper3:
-        build: ./zookeeper
-        image: "myzookeeper"
-        container_name: "zookeeper3"
-        ports:
-            - "2003:2181"
-        environment:
-            ZOOKEEPER_MYID: 3
-        volumes:
-            - ./zookeeper/zoo.cfg:/home/zookeeper/apache-zookeeper-3.6.2-bin/conf/zoo.cfg
+
+              #    zookeeper2:
+              #        build: ./zookeeper
+              #        image: "myzookeeper"
+              #        container_name: "zookeeper2"
+              #        ports:
+              #            - "2002:2181"
+              #        environment:
+              #            ZOOKEEPER_MYID: 2
+              #        volumes:
+              #            - ./zookeeper/zoo.cfg:/home/zookeeper/apache-zookeeper-3.6.2-bin/conf/zoo.cfg
+              #
+              #    zookeeper3:
+              #        build: ./zookeeper
+              #        image: "myzookeeper"
+              #        container_name: "zookeeper3"
+              #        ports:
+              #            - "2003:2181"
+              #        environment:
+              #            ZOOKEEPER_MYID: 3
+              #        volumes:
+              #            - ./zookeeper/zoo.cfg:/home/zookeeper/apache-zookeeper-3.6.2-bin/conf/zoo.cfg
+
+    # Kafka Brokerクラスタ
     broker1:
         build: ./kafkabroker
         depends_on:
             - zookeeper1
-            - zookeeper2
-            - zookeeper3
+            #- zookeeper2
+            #- zookeeper3
         image: "mykafka"
         container_name: "broker1"
         ports:
@@ -45,40 +50,41 @@ services:
         hostname: "broker1"
 
         # メモリが足らなくなってきたのでクラスタリングは一時停止
-    broker2:
-        build: ./kafkabroker
-        depends_on:
-            - zookeeper1
-            - zookeeper2
-            - zookeeper3
-        image: "mykafka"
-        container_name: "broker2"
-        ports:
-            - "9002:9092"
-        volumes:
-            - ./kafkabroker/server2.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
-        hostname: "broker2"
+        #    broker2:
+        #        build: ./kafkabroker
+        #        depends_on:
+        #            - zookeeper1
+        #            - zookeeper2
+        #            - zookeeper3
+        #        image: "mykafka"
+        #        container_name: "broker2"
+        #        ports:
+        #            - "9002:9092"
+        #        volumes:
+        #            - ./kafkabroker/server2.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
+        #        hostname: "broker2"
+        #
+        #    broker3:
+        #        build: ./kafkabroker
+        #        depends_on:
+        #            - zookeeper1
+        #            - zookeeper2
+        #            - zookeeper3
+        #        image: "mykafka"
+        #        container_name: "broker3"
+        #        ports:
+        #            - "9003:9092"
+        #        volumes:
+        #            - ./kafkabroker/server3.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
+        #        hostname: "broker3"
 
-    broker3:
-        build: ./kafkabroker
-        depends_on:
-            - zookeeper1
-            - zookeeper2
-            - zookeeper3
-        image: "mykafka"
-        container_name: "broker3"
-        ports:
-            - "9003:9092"
-        volumes:
-            - ./kafkabroker/server3.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
-        hostname: "broker3"
-
+    # Kafka RESET Proxyサーバ
     kafka_proxy:
         build: ./confluent
         depends_on:
             - broker1
-            - broker2
-            - broker3
+            #- broker2
+            #- broker3
         image: "myconfluent"
         container_name: "kafka_proxy"
         ports:
@@ -87,13 +93,14 @@ services:
             - ./confluent/kafka-rest.properties:/home/confluent/confluent-6.0.0/etc/kafka-rest/kafka-rest.properties
         command: ["kafka-rest-start","/home/confluent/confluent-6.0.0/etc/kafka-rest/kafka-rest.properties"]
 
+    # Kafka Connectサーバ
     kafka_connector1:
-        build: ./kafkabroker
+        build: ./kafkaconnector
         depends_on:
             - broker1
             #- broker2
             #- broker3
-        image: "mykafka"
+        image: "mykafkaconnector"
         container_name: "kafka_connector1"
         ports:
             - "8083:8083"
@@ -105,11 +112,12 @@ services:
 
         # メモリが足らなくなってきたのでクラスタリングは一時停止
         #    kafka_connector2:
+        #        build: ./kafkaconnector
         #        depends_on:
         #            - broker1
         #            - broker2
         #            - broker3
-        #        image: "mykafka"
+        #        image: "mykafkaconnector"
         #        container_name: "kafka_connector2"
         #        ports:
         #            - "8084:8083"
@@ -127,12 +135,14 @@ services:
         image: "myelasticsearch"
         container_name: "elasticsearch1"
         ports:
-            - "9200:9200"
-            - "9300:9300"
+            - "9200:9200" #WebAPI
+            - "9300:9300" #クラスタ間通信用（HOSTに開ける必要はない）
         volumes:
             - ./elasticsearch/jvm.options:/home/elasticsearch/elasticsearch-7.9.2/config/jvm.options
             - ./elasticsearch/elasticsearch1.yml:/home/elasticsearch/elasticsearch-7.9.2/config/elasticsearch.yml
         command: ["elasticsearch"]
+
+
     elasticsearch2:
         # HOST側の変更設定が必要(65530 から262144へ増加)
         # sudo sysctl -w vm.max_map_count = 262144
@@ -154,6 +164,9 @@ services:
         build: ./kibana
         image: "mykibana"
         container_name: "kibana"
+        depends_on:
+            - elasticsearch1
+            #- elasticsearch2
         ports:
             - "5601:5601"
         volumes:
