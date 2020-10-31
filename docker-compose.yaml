@@ -10,7 +10,10 @@ services:
         environment:
             ZOOKEEPER_MYID: 1
         volumes:
+            # 設定ファイル
             - ./zookeeper/zoo.cfg:/home/zookeeper/apache-zookeeper-3.6.2-bin/conf/zoo.cfg
+            # 永続化
+            - zookeeper1:/var/lib/zookeeper
 
               #    zookeeper2:
               #        build: ./zookeeper
@@ -22,6 +25,8 @@ services:
               #            ZOOKEEPER_MYID: 2
               #        volumes:
               #            - ./zookeeper/zoo.cfg:/home/zookeeper/apache-zookeeper-3.6.2-bin/conf/zoo.cfg
+              #            # 永続化
+              #            - zookeeper2:/var/lib/zookeeper
               #
               #    zookeeper3:
               #        build: ./zookeeper
@@ -33,6 +38,8 @@ services:
               #            ZOOKEEPER_MYID: 3
               #        volumes:
               #            - ./zookeeper/zoo.cfg:/home/zookeeper/apache-zookeeper-3.6.2-bin/conf/zoo.cfg
+              #            # 永続化
+              #            - zookeeper3:/var/lib/zookeeper
 
     # Kafka Brokerクラスタ
     broker1:
@@ -46,7 +53,10 @@ services:
         ports:
             - "9001:9092"
         volumes:
+            # 設定ファイル
             - ./kafkabroker/server1.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
+            # 永続化
+            - broker1:/tmp/kafka-logs
         hostname: "broker1"
 
         # メモリが足らなくなってきたのでクラスタリングは一時停止
@@ -62,6 +72,8 @@ services:
         #            - "9002:9092"
         #        volumes:
         #            - ./kafkabroker/server2.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
+        #            # 永続化
+        #            - broker2:/tmp/kafka-logs
         #        hostname: "broker2"
         #
         #    broker3:
@@ -76,6 +88,8 @@ services:
         #            - "9003:9092"
         #        volumes:
         #            - ./kafkabroker/server3.properties:/home/kafka/kafka_2.13-2.6.0/config/server.properties
+        #            # 永続化
+        #            - broker3:/tmp/kafka-logs
         #        hostname: "broker3"
 
     # Kafka RESET Proxyサーバ
@@ -138,8 +152,15 @@ services:
             - "9200:9200" #WebAPI
             - "9300:9300" #クラスタ間通信用（HOSTに開ける必要はない）
         volumes:
+            # JVMオプション
             - ./elasticsearch/jvm.options:/home/elasticsearch/elasticsearch-7.9.2/config/jvm.options
+            # Elasticsearch設定
             - ./elasticsearch/elasticsearch1.yml:/home/elasticsearch/elasticsearch-7.9.2/config/elasticsearch.yml
+
+            # データ永続化
+            - elasticsearch1_data:/home/elasticsearch/data
+            - elasticsearch1_logs:/home/elasticsearch/logs
+
         command: ["elasticsearch"]
 
 
@@ -158,6 +179,9 @@ services:
         volumes:
             - ./elasticsearch/jvm.options:/home/elasticsearch/elasticsearch-7.9.2/config/jvm.options
             - ./elasticsearch/elasticsearch2.yml:/home/elasticsearch/elasticsearch-7.9.2/config/elasticsearch.yml
+            # データ永続化
+            - elasticsearch2_data:/home/elasticsearch/data
+            - elasticsearch2_logs:/home/elasticsearch/logs
         command: ["elasticsearch"]
 
     kibana:
@@ -172,3 +196,66 @@ services:
         volumes:
             - ./kibana/kibana.yml:/home/kibana/kibana-7.9.3-linux-x86_64/config/kibana.yml
         command: ["kibana"]
+
+    nifi1:
+        build: ./nifi
+        image: "mynifi"
+        container_name: "nifi1"
+        voluems:
+            # Flowの保存先
+            - ./volumes/nifi1/flow.xml.gz:/home/nifi/nifi-1.12.1/conf/flow.xml.gz
+        ports:
+            - 8080:8080
+            - 8081:8081
+
+volumes:
+    zookeeper1:
+        driver_ops:
+            type: none
+            device: ./volumes/zookeeper1
+            o: bind
+            #    zookeeper2:
+            #        driver_ops:
+            #            type: none
+            #            device: ./volumes/zookeeper2
+            #            o: bind
+            #    zookeeper3:
+            #        driver_ops:
+            #            type: none
+            #            device: ./volumes/zookeeper3
+            #            o: bind
+    broker1:
+        driver_ops:
+            type: none
+            device: ./volumes/broker1
+            o: bind
+            #    broker2:
+            #        driver_ops:
+            #            type: none
+            #            device: ./volumes/broker2
+            #            o: bind
+            #    broker3:
+            #        driver_ops:
+            #            type: none
+            #            device: ./volumes/broker3
+            #            o: bind
+    elasticsearch1_data:
+        driver_ops:
+            type: none
+            device: ./volumes/elasticsearch1/data
+            o: bind
+    elasticsearch1_logs:
+        driver_ops:
+            type: none
+            device: ./volumes/elasticsearch1/logs
+            o: bind
+    elasticsearch2_data:
+        driver_ops:
+            type: none
+            device: ./volumes/elasticsearch2/data
+            o: bind
+    elasticsearch2_logs:
+        driver_ops:
+            type: none
+            device: ./volumes/elasticsearch2/logs
+            o: bind
