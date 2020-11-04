@@ -201,61 +201,127 @@ services:
         build: ./nifi
         image: "mynifi"
         container_name: "nifi1"
-        voluems:
+        environment:
+            ZOOKEEPER_MYID: 1
+        volumes:
+            # 設定ファイル
+            - ./nifi/nifi1.properties:/home/nifi/nifi-1.12.1/conf/nifi.properties
+            - ./nifi/zookeeper.properties:/home/nifi/nifi-1.12.1/conf/zookeeper.properties
+            - ./nifi/state-management.xml:/home/nifi/nifi-1.12.1/conf/state-management.xml
             # Flowの保存先
-            - ./volumes/nifi1/flow.xml.gz:/home/nifi/nifi-1.12.1/conf/flow.xml.gz
+            - nifi1:/home/nifi/nifi-1.12.1/data
         ports:
             - 8080:8080
-            - 8081:8081
+            - 8090:8090
+    nifi2:
+        build: ./nifi
+        image: "mynifi"
+        container_name: "nifi2"
+        environment:
+            ZOOKEEPER_MYID: 2
+        volumes:
+            # 設定ファイル
+            - ./nifi/nifi2.properties:/home/nifi/nifi-1.12.1/conf/nifi.properties
+            - ./nifi/zookeeper.properties:/home/nifi/nifi-1.12.1/conf/zookeeper.properties
+            - ./nifi/state-management.xml:/home/nifi/nifi-1.12.1/conf/state-management.xml
+            # Flowの保存先
+            - nifi2:/home/nifi/nifi-1.12.1/data
+        ports:
+            - 8081:8080
+            - 8091:8090
+
+    nifi3:
+        build: ./nifi
+        image: "mynifi"
+        container_name: "nifi3"
+        environment:
+            ZOOKEEPER_MYID: 3
+        volumes:
+            # 設定ファイル
+            - ./nifi/nifi3.properties:/home/nifi/nifi-1.12.1/conf/nifi.properties
+            - ./nifi/zookeeper.properties:/home/nifi/nifi-1.12.1/conf/zookeeper.properties
+            - ./nifi/state-management.xml:/home/nifi/nifi-1.12.1/conf/state-management.xml
+            # Flowの保存先
+            - nifi3:/home/nifi/nifi-1.12.1/data
+        ports:
+            - 8082:8080
+            - 8092:8090
+
+    nifizookeeper1:
+        image: "myzookeeper"
+        container_name: "nifizookeeper1"
+        ports:
+            - "2181:2181"
+        environment:
+            ZOOKEEPER_MYID: 1
+        volumes:
+            # 設定ファイル
+            - ./nifi/zoo.cfg:/home/zookeeper/apache-zookeeper-3.6.2-bin/conf/zoo.cfg
+
 
 volumes:
     zookeeper1:
-        driver_ops:
+        driver_opts:
             type: none
-            device: ./volumes/zookeeper1
+            device: ${PWD}/volumes/zookeeper1
             o: bind
             #    zookeeper2:
-            #        driver_ops:
+            #        driver_opts:
             #            type: none
             #            device: ./volumes/zookeeper2
             #            o: bind
             #    zookeeper3:
-            #        driver_ops:
+            #        driver_opts:
             #            type: none
             #            device: ./volumes/zookeeper3
             #            o: bind
     broker1:
-        driver_ops:
+        driver_opts:
             type: none
-            device: ./volumes/broker1
+            device: ${PWD}/volumes/broker1
             o: bind
             #    broker2:
-            #        driver_ops:
+            #        driver_opts:
             #            type: none
             #            device: ./volumes/broker2
             #            o: bind
             #    broker3:
-            #        driver_ops:
+            #        driver_opts:
             #            type: none
             #            device: ./volumes/broker3
             #            o: bind
     elasticsearch1_data:
-        driver_ops:
+        driver_opts:
             type: none
-            device: ./volumes/elasticsearch1/data
+            device: ${PWD}/volumes/elasticsearch1/data
             o: bind
     elasticsearch1_logs:
-        driver_ops:
+        driver_opts:
             type: none
-            device: ./volumes/elasticsearch1/logs
+            device: ${PWD}/volumes/elasticsearch1/logs
             o: bind
     elasticsearch2_data:
-        driver_ops:
+        driver_opts:
             type: none
-            device: ./volumes/elasticsearch2/data
+            device: ${PWD}/volumes/elasticsearch2/data
             o: bind
     elasticsearch2_logs:
-        driver_ops:
+        driver_opts:
             type: none
-            device: ./volumes/elasticsearch2/logs
+            device: ${PWD}/volumes/elasticsearch2/logs
+            o: bind
+    nifi1:
+        driver_opts:
+            type: none
+            device: ${PWD}/volumes/nifi1
+            o: bind
+    nifi2:
+        driver_opts:
+            type: none
+            device: ${PWD}/volumes/nifi2
+            o: bind
+    nifi3:
+        driver_opts:
+            type: none
+            device: ${PWD}/volumes/nifi3
             o: bind

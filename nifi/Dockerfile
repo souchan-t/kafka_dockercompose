@@ -11,5 +11,7 @@ COPY ./nifi-1.12.1-bin.tar.gz /home/nifi/nifi-1.12.1-bin.tar.gz
 RUN tar -xf nifi-1.12.1-bin.tar.gz
 ENV NIFI_HOME=/home/nifi/nifi-1.12.1
 ENV PATH=$PATH:$NIFI_HOME/bin
+RUN mkdir $NIFI_HOME/data
+COPY --chown=nifi:nifi Start.sh /home/nifi/Start.sh
+CMD ["./Start.sh"]
 
-CMD ["nifi.sh","run"]

@@ -12,5 +12,6 @@ ENV ELASTIC_HOME=/home/elasticsearch/elasticsearch-7.9.2
 ENV PATH=$PATH:$ELASTIC_HOME/bin
 ENV ES_PATH_CONF=$ELASTIC_HOME/config
 COPY --chown=elasticsearch:elasticsearch Start.sh /home/elasticsearch/Start.sh
+RUN mkdir /home/elasticsearch/data && mkdir /home/elasticsearch/logs
 CMD ["/home/elasticsearch/Start.sh"]
 
